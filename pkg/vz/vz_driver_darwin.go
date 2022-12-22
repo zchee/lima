@@ -106,6 +106,7 @@ func (l *LimaVzDriver) Start(ctx context.Context) (chan error, error) {
 	vm, errCh, err := startVM(ctx, l.BaseDriver)
 	if err != nil {
 		if errors.Is(err, vz.ErrUnsupportedOSVersion) {
+			panic(err)
 			return nil, fmt.Errorf("vz driver requires macOS 13 or higher to run: %q", err)
 		}
 		return nil, err

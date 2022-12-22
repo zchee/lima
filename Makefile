@@ -145,7 +145,7 @@ lint:
 
 .PHONY: clean
 clean:
-	rm -rf _output vendor
+	rm -rf _output
 
 .PHONY: artifacts-darwin
 artifacts-darwin:

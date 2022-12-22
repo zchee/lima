@@ -95,43 +95,53 @@ func startVM(ctx context.Context, driver *driver.BaseDriver) (*vz.VirtualMachine
 func createVM(driver *driver.BaseDriver, networkConn *os.File) (*vz.VirtualMachine, error) {
 	vmConfig, err := createInitialConfig(driver)
 	if err != nil {
+		panic(err)
 		return nil, err
 	}
 
-	if err = attachPlatformConfig(driver, vmConfig); err != nil {
-		return nil, err
-	}
+	// if err = attachPlatformConfig(driver, vmConfig); err != nil {
+	// 	panic(err)
+	// 	return nil, err
+	// }
 
 	if err = attachSerialPort(driver, vmConfig); err != nil {
+		panic(err)
 		return nil, err
 	}
 
 	if err = attachNetwork(driver, vmConfig, networkConn); err != nil {
+		panic(err)
 		return nil, err
 	}
 
 	if err = attachDisks(driver, vmConfig); err != nil {
+		panic(err)
 		return nil, err
 	}
 
 	if err = attachDisplay(driver, vmConfig); err != nil {
+		panic(err)
 		return nil, err
 	}
 
 	if err = attachConsole(driver, vmConfig); err != nil {
+		panic(err)
 		return nil, err
 	}
 
 	if err = attachFolderMounts(driver, vmConfig); err != nil {
+		panic(err)
 		return nil, err
 	}
 
 	if err = attachOtherDevices(driver, vmConfig); err != nil {
+		panic(err)
 		return nil, err
 	}
 
 	validated, err := vmConfig.Validate()
 	if !validated || err != nil {
+		panic(err)
 		return nil, err
 	}
 
@@ -139,18 +149,29 @@ func createVM(driver *driver.BaseDriver, networkConn *os.File) (*vz.VirtualMachi
 }
 
 func createInitialConfig(driver *driver.BaseDriver) (*vz.VirtualMachineConfiguration, error) {
+	var bootLoader vz.BootLoader
 	efiVariableStore, err := getEFI(driver)
 	if err != nil {
-		return nil, err
+		kernel := filepath.Join(driver.Instance.Dir, filenames.CIDataISO)
+		initrd := filepath.Join(driver.Instance.Dir, filenames.BaseDisk)
+		// cmdline := driver.Yaml.Images[0].Kernel.Cmdline
+		bootLoader, err = vz.NewLinuxBootLoader(kernel, vz.WithInitrd(initrd))
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	bootLoader, err := vz.NewEFIBootLoader(vz.WithEFIVariableStore(efiVariableStore))
-	if err != nil {
-		return nil, err
+	if bootLoader == nil {
+		bootLoader, err = vz.NewEFIBootLoader(vz.WithEFIVariableStore(efiVariableStore))
+		if err != nil {
+			panic(err)
+			return nil, err
+		}
 	}
 
 	bytes, err := units.RAMInBytes(*driver.Yaml.Memory)
 	if err != nil {
+		panic(err)
 		return nil, err
 	}
 
@@ -160,6 +181,7 @@ func createInitialConfig(driver *driver.BaseDriver) (*vz.VirtualMachineConfigura
 		uint64(bytes),
 	)
 	if err != nil {
+		panic(err)
 		return nil, err
 	}
 	return vmConfig, nil
@@ -215,10 +237,10 @@ func attachNetwork(driver *driver.BaseDriver, vmConfig *vz.VirtualMachineConfigu
 	if err != nil {
 		return err
 	}
-	err = fileAttachment.SetMaximumTransmissionUnit(1500)
-	if err != nil {
-		return err
-	}
+	// err = fileAttachment.SetMaximumTransmissionUnit(1500)
+	// if err != nil {
+	// 	return err
+	// }
 	networkConfig, err := newVirtioNetworkDeviceConfiguration(fileAttachment, limayaml.MACAddress(driver.Instance.Dir))
 	if err != nil {
 		return err
